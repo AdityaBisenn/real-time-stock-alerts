@@ -1,0 +1,8 @@
+logging:
+  level: INFO
+  file: logs/api_gateway.log
+services:
+  auth: "http://authentication-service:8000"
+  stock_fetch: "http://stock-fetching-service:8001"
+  alert: "http://stock-alert-service:8002"
+  notification: "http://notification-service:8003"
