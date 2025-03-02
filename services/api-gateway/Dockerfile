@@ -1,5 +1,5 @@
 # Use official Python image
-FROM python:3.11-slim
+FROM python:3.10
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -25,7 +25,7 @@ RUN pip install --upgrade pip && pip install poetry && poetry install --no-root 
 COPY . .
 
 # Expose API Gateway port
-EXPOSE 8000
+EXPOSE 8080
 
 # Start API Gateway using Uvicorn with proper settings
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

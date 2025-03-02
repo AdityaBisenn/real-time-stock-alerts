@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose port 8002 for service communication
-EXPOSE 8002
+EXPOSE 8001
 
-# Run the Kafka consumer service
-CMD ["python", "kafka_consumer.py"]
+# Start API Gateway using Uvicorn with proper settings
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]

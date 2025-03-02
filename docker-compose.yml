@@ -18,14 +18,22 @@ services:
     restart: always
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    restart: always
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper
 
   kafka:
     image: confluentinc/cp-kafka:latest
+    restart: always
     depends_on:
       - zookeeper
     ports:
@@ -34,38 +42,73 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka_data:/var/lib/kafka
 
   authentication-service:
     build: ./services/authentication_service
+    restart: always
     ports:
       - "8000:8000"
     depends_on:
       - postgres
     environment:
-      DATABASE_URL: "postgres://user:password@postgres:5432/stock_alerts"
+      DATABASE_URL: "postgresql://user:password@postgres:5432/stock_alerts"
 
   stock-fetching-service:
     build: ./services/stock-fetching-service
-    ports:
-      - "8001:8001"
-    depends_on:
-      - kafka
-      - redis
-
-  stock-alert-service:
-    build: ./services/stock-alert-service
+    restart: always
     ports:
       - "8002:8002"
     depends_on:
       - kafka
+      - redis
       - postgres
+    environment:
+      REDIS_BROKER_URL: "redis://redis:6379/0"
+
+  stock-alert-service:
+    build: ./services/stock-alert-service
+    restart: always
+    ports:
+      - "8001:8001"
+    depends_on:
+      - kafka
+      - postgres
+      - redis
 
   notification-service:
     build: ./services/notification-service
+    restart: always
     ports:
       - "8003:8003"
     depends_on:
       - kafka
+      - postgres
+      - redis
+
+  celery-worker:
+    build: ./services/stock-fetching-service
+    restart: always
+    depends_on:
+      - redis
+      - stock-fetching-service
+    command: celery -A app.core.celery worker --loglevel=info
+    environment:
+      REDIS_BROKER_URL: "redis://redis:6379/0"
+
+  celery-beat:
+    build: ./services/stock-fetching-service
+    restart: always
+    depends_on:
+      - redis
+      - celery-worker
+    command: celery -A app.core.celery beat --loglevel=info
+    environment:
+      REDIS_BROKER_URL: "redis://redis:6379/0"
 
 volumes:
   postgres_data:
+  redis_data:
+  zookeeper_data:
+  kafka_data:

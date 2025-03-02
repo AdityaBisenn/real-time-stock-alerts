@@ -13,9 +13,9 @@ def check_alerts(stock_data):
         for alert in alerts:
             if alert.stock_symbol == symbol:
                 if alert.condition == "above" and price > alert.target_price:
-                    send_notification(alert.user_id, symbol, price)
+                    send_notification(alert.user_id, symbol, price, alert.id)
                 elif alert.condition == "below" and price < alert.target_price:
-                    send_notification(alert.user_id, symbol, price)
+                    send_notification(alert.user_id, symbol, price, alert.id)
                 else:
                     logger.info(f"Price for stock {symbol} did not meet the alert conditions")
             else:

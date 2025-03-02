@@ -11,8 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the entire project
 COPY . .
 
-# Expose port 8003 for WebSocket connections
-EXPOSE 8003
+# Expose port 8001 for the FastAPI service
+EXPOSE 8002
 
-# Run the WebSocket service
-CMD ["python", "websocket_server.py"]
+# Run FastAPI server
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003"]
