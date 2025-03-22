@@ -22,7 +22,7 @@ async def consume_notification_alerts():
         for message in consumer:
             notification_data = message.value
             logger.info(f"Received notification alert: {notification_data}")
-            await send_notification(notification_data)  # Send the notification to the user
+            await send_notification(notification_data) 
     except Exception as e:
         logger.error(f"Error consuming notification alerts: {e}")
 

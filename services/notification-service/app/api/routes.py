@@ -11,7 +11,7 @@ router = APIRouter()
 @router.get("/notifications/{user_id}")
 async def fetch_notifications(user_id: int, db: Session = Depends(get_db)):
     """Fetch past notifications for a user"""
-    return get_notifications(db, user_id)
+    return get_notifications(user_id)
 
 @router.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: int):

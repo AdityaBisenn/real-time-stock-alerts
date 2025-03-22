@@ -18,6 +18,5 @@ celery.conf.update(
 
 celery.autodiscover_tasks(['app.tasks.stock_tasks'])
 
-# Import tasks to ensure they are registered
 import app.tasks.stock_tasks 
 import app.core.celery_tasks

@@ -18,4 +18,4 @@ def fetch_stock_data_task(stock_symbol: str):
         else:
             logger.error(f"Failed to fetch stock data: {response.text}")
     except Exception as e:
-        logger.error(f"Error fetching stock data: {e}")
+        logger.error(f"Error fetching stock data: {e}") 

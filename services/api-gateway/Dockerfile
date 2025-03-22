@@ -1,31 +1,18 @@
-# Use official Python image
+# Use Python 3.10 as base image
 FROM python:3.10
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    POETRY_VIRTUALENVS_CREATE=false
 
 # Set working directory inside the container
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Copy requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy dependencies file (e.g., requirements.txt or poetry.lock)
-COPY pyproject.toml poetry.lock ./
-
-# Install dependencies using Poetry
-RUN pip install --upgrade pip && pip install poetry && poetry install --no-root --no-dev
-
-# Copy application code
+# Copy the entire project
 COPY . .
 
-# Expose API Gateway port
+# Expose port 8001 for the FastAPI service
 EXPOSE 8080
 
-# Start API Gateway using Uvicorn with proper settings
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Run FastAPI server
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

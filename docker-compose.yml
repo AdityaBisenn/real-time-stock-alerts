@@ -12,6 +12,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d stock_alerts"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:latest
@@ -51,7 +56,8 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       DATABASE_URL: "postgresql://user:password@postgres:5432/stock_alerts"
 
@@ -106,6 +112,22 @@ services:
     command: celery -A app.core.celery beat --loglevel=info
     environment:
       REDIS_BROKER_URL: "redis://redis:6379/0"
+
+  api-gateway:
+    build: ./services/api-gateway
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - authentication-service
+      - stock-fetching-service
+      - stock-alert-service
+      - notification-service
+    environment:
+      AUTH_SERVICE_URL: "http://authentication-service:8000"
+      STOCK_FETCH_SERVICE_URL: "http://stock-fetching-service:8002"
+      STOCK_ALERT_SERVICE_URL: "http://stock-alert-service:8001"
+      NOTIFICATION_SERVICE_URL: "http://notification-service:8003"
 
 volumes:
   postgres_data:

@@ -23,9 +23,36 @@ async def create_alert(user_id, stock_symbol, target_price, condition):
     db.close()
     return alert
 
-def get_active_alerts():
+async def get_alerts(user_id):
+    """"Get Alerts by user id"""
+    db = next(get_db())
+    alerts = db.query(StockAlert).filter(StockAlert.user_id == user_id).all()
+    db.close()
+    return alerts
+
+async def delete_alert(alert_id):
+    """"Delete alert by alert id"""
+    db = next(get_db())
+    alerts = db.query(StockAlert).filter(StockAlert.id == alert_id).all()
+    db.close()
+    return alerts
+
+def get_active_alerts(symbol):
     """Fetch all active alerts"""
     db = next(get_db())
-    data = db.query(StockAlert).filter(StockAlert.is_active==True).all()
+    data = db.query(StockAlert).filter(StockAlert.stock_symbol == symbol, StockAlert.is_active == True).all()
     db.close()
     return data
+
+async def get_active_alert_by_user(user_id):
+    """Fetch active alerts by user"""
+    db = next(get_db())
+    data = db.query(StockAlert).filter(StockAlert.user_id == user_id, StockAlert.is_active==True).all()
+    db.close()
+    return data
+
+async def get_target_list():
+    db = next(get_db())
+    data = db.query(StockAlert.stock_symbol).filter(StockAlert.is_active == True).distinct().all()
+    db.close()
+    return [stock[0] for stock in data][1:]

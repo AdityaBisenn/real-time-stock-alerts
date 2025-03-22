@@ -1,33 +1,72 @@
-import requests
-import app.core.logger as logger
-import os
+import httpx
+from app.core.logger import logger
 
-ALPHA_VANTAGE_API_KEY = "QBRC2CQELNH554P1"
-API_URL = "https://www.alphavantage.co/query"
+TWELVEDATA_API_KEY = "9764e76f6ee24424931944be50a35339"
+API_URL = "https://api.twelvedata.com/time_series"
 
-def fetch_stock_data(symbol: str):
+async def fetch_stock_data(symbol: str):
+    """Fetch the latest stock price."""
     try:
         params = {
-            "function": "TIME_SERIES_INTRADAY",
             "symbol": symbol,
             "interval": "1min",
-            "apikey": ALPHA_VANTAGE_API_KEY,
+            "apikey": TWELVEDATA_API_KEY,
+            "outputsize": 1,
         }
-        response = requests.get(API_URL, params=params)
-        response.raise_for_status()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(API_URL, params=params)
+            response.raise_for_status()
         
         data = response.json()
-        time_series = data.get("Time Series (1min)")
+        values = data.get("values")
         
-        if not time_series:
-            logger.logger.error(f"No data found for {symbol}. Response: {data}")
+        if not values:
+            logger.error(f"No data found for {symbol}. Response: {data}")
+            return None
+        
+        latest_quote = float(values[0]["close"])
+        return latest_quote
+    
+    except Exception as e:
+        logger.error(f"Failed to fetch data for {symbol}: {e}")
+        return None
+
+
+async def get_stock_data(symbol: str, interval: str = "1min"):
+    """Get historical stock data and parse it into a structured format."""
+    try:
+        params = {
+            "symbol": symbol,
+            "interval": interval,
+            "apikey": TWELVEDATA_API_KEY,
+            "outputsize": 80,
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.get(API_URL, params=params)
+            response.raise_for_status()
+        
+        data = response.json()
+        values = data.get("values")
+        
+        if not values:
+            logger.error(f"No data found for {symbol}. Response: {data}")
             return None
 
-        latest_timestamp = sorted(time_series.keys())[-1]
-        last_quote = float(time_series[latest_timestamp]["4. close"])
-        
-        return last_quote
+        # Convert the raw API response into a list of formatted dictionaries
+        formatted_data = [
+            {
+                "date": item["datetime"],
+                "open": float(item["open"]),
+                "high": float(item["high"]),
+                "low": float(item["low"]),
+                "close": float(item["close"]),
+                "volume": int(item["volume"]),
+            }
+            for item in values
+        ]
+
+        return formatted_data
 
     except Exception as e:
-        logger.logger.error(f"Failed to fetch data for {symbol}: {e}")
+        logger.error(f"Failed to get data for {symbol}: {e}")
         return None
